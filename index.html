@@ -5,59 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>QRスキャン</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Hiragino Sans',sans-serif;background:#1c1c1e;color:#fff;min-height:100vh;display:flex;flex-direction:column}
     header{background:#000;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
     header h1{font-size:15px;font-weight:700}
     header span{font-size:11px;color:#aaa}
-
-    /* カメラ */
     #camera-area{position:relative;width:100%;background:#000;overflow:hidden}
     #qr-video{width:100%;display:block;object-fit:cover}
-    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-    .frame{width:58%;aspect-ratio:1;border:3px solid #1a73e8;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);position:relative;overflow:hidden}
+    .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+    .frame{width:60%;aspect-ratio:1;border:3px solid #1a73e8;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45);position:relative;overflow:hidden}
     .line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#1a73e8,transparent);animation:scan 2s linear infinite}
     @keyframes scan{0%{top:0}100%{top:100%}}
-    .hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,0.85)}
-    #status-bar{position:absolute;top:8px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;color:#fbbc04}
-
-    #cam-error{display:none;padding:32px 20px;background:#2c2c2e;text-align:center}
+    .hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,0.85)}
+    #status-bar{position:absolute;top:6px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;color:#fbbc04;padding:0 8px}
+    #cam-error{display:none;padding:28px 20px;background:#2c2c2e;text-align:center;flex-direction:column;gap:10px}
     #cam-error p{color:#aaa;font-size:13px;line-height:1.8}
-    #cam-error .err{color:#ea4335;font-size:11px;font-family:monospace;margin-top:6px}
-
-    .content{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px}
-    .card{background:#2c2c2e;border-radius:12px;padding:14px}
-    .card h3{font-size:13px;color:#aaa;margin-bottom:10px}
-    .card.accent{border-left:4px solid #1a73e8}
+    .err-msg{color:#ea4335!important;font-size:11px;font-family:monospace}
+    .content{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .card{background:#2c2c2e;border-radius:10px;padding:12px}
+    .card h3{font-size:12px;color:#888;margin-bottom:8px}
+    .accent{border-left:3px solid #1a73e8}
     .row{display:flex;gap:8px}
-    input.inp{flex:1;background:#1c1c1e;border:1.5px solid #444;border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit}
-    input.inp:focus{outline:none;border-color:#1a73e8}
-    .dl{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;font-size:12px}
-    .dl dt{color:#888} .dl dd{font-weight:700}
-    .form-group{margin-bottom:10px}
-    .lbl{display:block;font-size:11px;color:#aaa;margin-bottom:5px}
-    .sbtns{display:flex;gap:8px}
-    .sbtn{flex:1;padding:10px 4px;border-radius:8px;border:2px solid;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#fff;transition:.2s}
-    .sbtn[data-v="進行中"]{border-color:#1a73e8} .sbtn.sel[data-v="進行中"]{background:#1a73e8}
-    .sbtn[data-v="完了"]{border-color:#34a853}   .sbtn.sel[data-v="完了"]{background:#34a853}
-    .sbtn[data-v="一時停止"]{border-color:#fbbc04} .sbtn.sel[data-v="一時停止"]{background:#fbbc04;color:#000}
-    .submit-btn{width:100%;padding:15px;background:#1a73e8;color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+    .inp{flex:1;background:#1c1c1e;border:1.5px solid #444;border-radius:7px;padding:9px 11px;color:#fff;font-size:13px;font-family:inherit}
+    .inp:focus{outline:none;border-color:#1a73e8}
+    .dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12px}
+    .dl dt{color:#888}.dl dd{font-weight:700}
+    .fg{margin-bottom:9px}
+    .lbl{display:block;font-size:11px;color:#aaa;margin-bottom:4px}
+    .sbtns{display:flex;gap:6px}
+    .sbtn{flex:1;padding:9px 4px;border-radius:7px;border:2px solid;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;background:transparent;color:#fff;transition:.15s}
+    .sbtn[data-v="進行中"]{border-color:#1a73e8}.sbtn.sel[data-v="進行中"]{background:#1a73e8}
+    .sbtn[data-v="完了"]{border-color:#34a853}.sbtn.sel[data-v="完了"]{background:#34a853}
+    .sbtn[data-v="一時停止"]{border-color:#fbbc04}.sbtn.sel[data-v="一時停止"]{background:#fbbc04;color:#000}
+    .submit-btn{width:100%;padding:13px;background:#1a73e8;color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
     .submit-btn:disabled{background:#444;cursor:not-allowed}
-    .cancel-btn{width:100%;padding:11px;background:transparent;color:#aaa;border:1.5px solid #444;border-radius:12px;font-family:inherit;font-size:13px;cursor:pointer;margin-top:10px}
-    .hist{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #3a3a3c;font-size:11px}
+    .cancel-btn{width:100%;padding:9px;background:transparent;color:#aaa;border:1.5px solid #444;border-radius:10px;font-family:inherit;font-size:12px;cursor:pointer;margin-top:8px}
+    .hist{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid #3a3a3c;font-size:11px}
     .hist:last-child{border:none}
-    .badge{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;flex-shrink:0}
-    .done{background:#34a85333;color:#34a853} .prog{background:#1a73e833;color:#1a73e8}
+    .badge{padding:2px 6px;border-radius:9px;font-size:10px;font-weight:700;flex-shrink:0}
+    .done{background:#34a85333;color:#34a853}.prog{background:#1a73e833;color:#1a73e8}
     .hidden{display:none!important}
-
-    /* 設定パネル */
-    #cfg-panel{background:#111;padding:12px 16px;border-bottom:1px solid #333;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    #cfg-panel label{font-size:11px;color:#aaa}
-    #cfg-url{flex:1;min-width:180px;background:#2c2c2e;border:1.5px solid #444;border-radius:6px;padding:7px 10px;color:#fff;font-size:11px;font-family:monospace}
+    #cfg-panel{background:#111;padding:10px 14px;border-bottom:1px solid #333;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    #cfg-panel label{font-size:11px;color:#aaa;flex-shrink:0}
+    #cfg-url{flex:1;min-width:160px;background:#2c2c2e;border:1.5px solid #444;border-radius:5px;padding:6px 9px;color:#fff;font-size:10px;font-family:monospace}
     #cfg-url:focus{outline:none;border-color:#1a73e8}
-    #cfg-save{background:#1a73e8;border:none;color:#fff;border-radius:6px;padding:7px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+    #cfg-save{background:#1a73e8;border:none;color:#fff;border-radius:5px;padding:6px 11px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+    /* デバッグバー */
+    #debug-bar{background:#0a0a0a;padding:5px 12px;font-size:10px;color:#555;font-family:monospace;border-bottom:1px solid #222;min-height:22px}
+    /* QR検出成功フラッシュ */
+    .flash{animation:flash-anim 0.3s ease;border-color:#34a853!important}
+    @keyframes flash-anim{0%{border-color:#34a853;box-shadow:0 0 20px #34a853}100%{}}
   </style>
 </head>
 <body>
@@ -66,57 +64,55 @@
   <span id="clock"></span>
 </header>
 
-<!-- GAS URL設定バー -->
 <div id="cfg-panel">
   <label>GAS URL:</label>
   <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec">
   <button id="cfg-save" onclick="saveConfig()">保存</button>
 </div>
 
-<!-- カメラ -->
+<div id="debug-bar">初期化中...</div>
+
 <div id="camera-area">
   <video id="qr-video" autoplay playsinline muted></video>
   <canvas id="qr-canvas" style="display:none"></canvas>
   <div class="overlay">
-    <div class="frame"><div class="line"></div></div>
+    <div class="frame" id="scan-frame"><div class="line"></div></div>
     <div class="hint">QRコードをフレーム内に合わせてください</div>
     <div id="status-bar">カメラ起動中...</div>
   </div>
 </div>
-<div id="cam-error">
-  <p>📷<br>カメラを起動できませんでした<br>
-  ブラウザのアドレスバー横の🔒をクリックしてカメラ許可を確認してください</p>
-  <p class="err" id="err-detail"></p>
+<div id="cam-error" style="display:none;flex-direction:column">
+  <p>📷 カメラを起動できませんでした</p>
+  <p>ブラウザのアドレスバー横の 🔒 をタップしてカメラ許可を確認してください</p>
+  <p class="err-msg" id="err-detail"></p>
+  <button onclick="retryCamera()" style="background:#1a73e8;border:none;color:#fff;border-radius:7px;padding:10px 20px;font-family:inherit;font-size:13px;cursor:pointer;margin-top:8px">🔄 再試行</button>
 </div>
 
 <div class="content">
-  <!-- 手動入力 -->
   <div class="card">
     <h3>🔤 手動入力（スキャン代替）</h3>
     <div class="row">
-      <input class="inp" type="text" id="manual-input" placeholder='{"type":"PROCESS","planId":"PLAN-..."}'>
-      <button class="sbtn" style="flex:0;min-width:auto;padding:10px 14px;border-color:#1a73e8;color:#1a73e8" onclick="processQR(document.getElementById('manual-input').value)">読込</button>
+      <input class="inp" type="text" id="manual-input" placeholder='QRの内容またはPLAN-XXXXXXXX'>
+      <button class="sbtn" style="flex:0;min-width:auto;padding:9px 12px;border-color:#1a73e8;color:#1a73e8;font-size:12px" onclick="processManual()">読込</button>
     </div>
   </div>
 
-  <!-- 計画情報 -->
   <div class="card accent hidden" id="plan-card">
     <h3>📋 計画情報</h3>
     <dl class="dl" id="plan-dl"></dl>
   </div>
 
-  <!-- 実績入力フォーム -->
   <div class="card hidden" id="form-card">
     <h3>✏️ 実績入力</h3>
-    <div class="form-group">
+    <div class="fg">
       <label class="lbl">作業者名 *</label>
       <input class="inp" style="width:100%" id="f-op" placeholder="あなたの名前">
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label class="lbl">実績数量</label>
       <input type="number" class="inp" style="width:100%" id="f-qty" placeholder="0">
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label class="lbl">ステータス *</label>
       <div class="sbtns">
         <button class="sbtn" data-v="進行中"   onclick="selStatus(this)">▶ 開始</button>
@@ -124,7 +120,7 @@
         <button class="sbtn" data-v="一時停止" onclick="selStatus(this)">⏸ 停止</button>
       </div>
     </div>
-    <div class="form-group">
+    <div class="fg">
       <label class="lbl">備考</label>
       <input class="inp" style="width:100%" id="f-notes" placeholder="特記事項">
     </div>
@@ -132,7 +128,6 @@
     <button class="cancel-btn" onclick="reset()">キャンセル・別のQRを読む</button>
   </div>
 
-  <!-- 履歴 -->
   <div class="card hidden" id="hist-card">
     <h3>📂 実績履歴</h3>
     <div id="hist-list"></div>
@@ -140,20 +135,43 @@
 </div>
 
 <script>
+// ===== jsQRを動的にロード（CDN失敗時のフォールバック付き）=====
+var jsQRLoaded = false;
+function loadJsQR(cb) {
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js';
+  s.onload = function(){ jsQRLoaded = true; debug('jsQR: CDN1 OK'); if(cb)cb(); };
+  s.onerror = function(){
+    debug('jsQR: CDN1失敗 → CDN2試行');
+    var s2 = document.createElement('script');
+    s2.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    s2.onload = function(){ jsQRLoaded = true; debug('jsQR: CDN2 OK'); if(cb)cb(); };
+    s2.onerror = function(){ debug('jsQR: 読込失敗'); };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+
 // ===== 設定 =====
 var GAS_URL = localStorage.getItem('qr_gas_url') || '';
-var planId = '', process = '', status = '', stream = null, timer = null, last = '';
+var planId='', procName='', status='', stream=null, timer=null, last='';
+var scanCount=0, detectCount=0;
+
+if (GAS_URL) document.getElementById('cfg-url').value = GAS_URL;
 
 function saveConfig() {
   GAS_URL = document.getElementById('cfg-url').value.trim();
   localStorage.setItem('qr_gas_url', GAS_URL);
-  Swal.fire({toast:true,position:'top',icon:'success',title:'URLを保存しました',showConfirmButton:false,timer:1500,background:'#2c2c2e',color:'#fff'});
+  Swal.fire({toast:true,position:'top',icon:'success',title:'GAS URLを保存しました',showConfirmButton:false,timer:1500,background:'#2c2c2e',color:'#fff'});
 }
 
-// 保存済みURLがあればセット
-if (GAS_URL) document.getElementById('cfg-url').value = GAS_URL;
+// ===== デバッグ表示 =====
+function debug(msg) {
+  document.getElementById('debug-bar').textContent = msg;
+  console.log('[QR]', msg);
+}
 
-// 時計
+// ===== 時計 =====
 (function tick(){
   document.getElementById('clock').textContent = new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
   setTimeout(tick,30000);
@@ -161,153 +179,241 @@ if (GAS_URL) document.getElementById('cfg-url').value = GAS_URL;
 
 // ===== カメラ =====
 function startCamera() {
+  debug('カメラ起動中...');
   document.getElementById('status-bar').textContent = 'カメラ起動中...';
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showError('お使いのブラウザはカメラAPIに対応していません');
+    showCamError('MediaDevices APIが使えません（HTTPSが必要）');
     return;
   }
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}})
-    .then(function(s) {
-      stream = s;
-      var v = document.getElementById('qr-video');
-      v.srcObject = s; v.play();
-      document.getElementById('camera-area').style.display = 'block';
-      document.getElementById('cam-error').style.display = 'none';
-      document.getElementById('status-bar').textContent = 'スキャン待機中...';
-      startScan();
-    })
-    .catch(function(err) { showError(err.name + ': ' + err.message); });
+  // まず背面カメラ、失敗したら任意のカメラ
+  var constraints = {video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}};
+  navigator.mediaDevices.getUserMedia(constraints)
+    .then(gotStream)
+    .catch(function(err1){
+      debug('背面カメラ失敗: '+err1.name+' → 任意カメラ試行');
+      navigator.mediaDevices.getUserMedia({video:true})
+        .then(gotStream)
+        .catch(function(err2){ showCamError(err2.name+': '+err2.message); });
+    });
 }
 
-function showError(msg) {
-  document.getElementById('camera-area').style.display = 'none';
-  document.getElementById('cam-error').style.display = 'block';
-  document.getElementById('err-detail').textContent = msg;
-}
-
-function startScan() {
+function gotStream(s) {
+  stream = s;
   var v = document.getElementById('qr-video');
-  var c = document.getElementById('qr-canvas');
-  var ctx = c.getContext('2d');
-  timer = setInterval(function() {
-    if (v.readyState < v.HAVE_ENOUGH_DATA) return;
-    c.width = v.videoWidth; c.height = v.videoHeight;
-    ctx.drawImage(v, 0, 0, c.width, c.height);
-    if (typeof jsQR === 'undefined') return;
-    var code = jsQR(ctx.getImageData(0,0,c.width,c.height).data, c.width, c.height, {inversionAttempts:'dontInvert'});
-    if (code && code.data && code.data !== last) {
-      last = code.data;
-      document.getElementById('status-bar').textContent = 'QR検出！';
-      processQR(code.data);
-    }
-  }, 300);
+  v.srcObject = s;
+  v.onloadedmetadata = function(){
+    v.play();
+    debug('カメラ起動OK: '+v.videoWidth+'x'+v.videoHeight);
+    document.getElementById('camera-area').style.display = 'block';
+    document.getElementById('cam-error').style.display = 'none';
+    document.getElementById('status-bar').textContent = 'スキャン待機中 📷';
+    startScan();
+  };
+}
+
+function showCamError(msg) {
+  document.getElementById('camera-area').style.display = 'none';
+  document.getElementById('cam-error').style.display = 'flex';
+  document.getElementById('err-detail').textContent = msg;
+  debug('カメラエラー: '+msg);
+}
+
+function retryCamera() {
+  document.getElementById('cam-error').style.display = 'none';
+  document.getElementById('camera-area').style.display = 'block';
+  startCamera();
 }
 
 function stopCamera() {
-  if (timer) { clearInterval(timer); timer = null; }
-  if (stream) { stream.getTracks().forEach(function(t){t.stop();}); stream = null; }
+  if (timer){ clearInterval(timer); timer=null; }
+  if (stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
 }
 
-// ===== QR処理 =====
+// ===== スキャンループ =====
+function startScan() {
+  if (!jsQRLoaded) {
+    debug('jsQR未ロード - 待機中...');
+    setTimeout(startScan, 500);
+    return;
+  }
+  var v = document.getElementById('qr-video');
+  var c = document.getElementById('qr-canvas');
+  var ctx = c.getContext('2d');
+
+  timer = setInterval(function(){
+    if (!v.videoWidth || v.readyState < v.HAVE_ENOUGH_DATA) return;
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    ctx.drawImage(v, 0, 0, c.width, c.height);
+    scanCount++;
+
+    // 5回ごとにデバッグ表示更新
+    if (scanCount % 5 === 0) {
+      debug('スキャン中: フレーム'+scanCount+' / 検出'+detectCount+'回 / '+c.width+'x'+c.height);
+    }
+
+    var imageData = ctx.getImageData(0, 0, c.width, c.height);
+    var code = jsQR(imageData.data, c.width, c.height, {inversionAttempts:'attemptBoth'});
+
+    if (code && code.data) {
+      if (code.data === last) return; // 同じQRを連続検出しない
+      detectCount++;
+      last = code.data;
+      debug('QR検出! ['+detectCount+'回目]: '+code.data.substring(0,40)+'...');
+      document.getElementById('status-bar').textContent = '✅ QR検出！';
+      // フレームを緑に光らせる
+      var f = document.getElementById('scan-frame');
+      f.classList.add('flash');
+      setTimeout(function(){f.classList.remove('flash');}, 500);
+      processQR(code.data);
+    }
+  }, 250);
+}
+
+// ===== QR処理：URLでも何でも受け付ける =====
 function processQR(text) {
   if (!text) return;
-  var d;
-  try { d = JSON.parse(text.trim()); } catch(e) {
-    document.getElementById('status-bar').textContent = '形式エラー'; return;
-  }
-  if (d.type === 'PROCESS') { stopCamera(); loadPlan(text.trim()); }
-  else if (d.type === 'FINISHED') {
+  var trimmed = text.trim();
+  debug('QR処理: '+trimmed.substring(0,50));
+
+  // JSON形式か確認
+  var d = null;
+  try { d = JSON.parse(trimmed); } catch(e) { d = null; }
+
+  if (d && d.type === 'PROCESS') {
+    // 工程管理QR
     stopCamera();
-    Swal.fire({icon:'info',title:'完成品',html:'品番: '+d.itemCode+'<br>数量: '+d.quantity,background:'#2c2c2e',color:'#fff'})
-      .then(reset);
+    loadPlan(trimmed);
+  } else if (d && d.type === 'FINISHED') {
+    // 完成品QR
+    stopCamera();
+    Swal.fire({icon:'info',title:'完成品QR',html:'品番: <strong>'+d.itemCode+'</strong><br>数量: '+(d.quantity||'-'),
+      background:'#2c2c2e',color:'#fff',confirmButtonColor:'#1a73e8'}).then(reset);
+  } else if (d && d.planId) {
+    // planIdだけ含む場合
+    stopCamera();
+    loadPlan(JSON.stringify({type:'PROCESS', planId:d.planId}));
+  } else {
+    // URLやその他テキスト → そのまま表示して確認
+    stopCamera();
+    Swal.fire({
+      icon:'info',
+      title:'QRコードを読み取りました',
+      html:'<div style="word-break:break-all;font-size:12px;background:#f5f5f5;padding:10px;border-radius:6px;text-align:left">'+
+        escHtml(trimmed)+'</div>'+
+        '<p style="margin-top:10px;font-size:12px;color:#666">このQRは工程管理用ではありません。<br>工程管理QRは現品票に印刷されたものを使ってください。</p>',
+      confirmButtonText:'OK - 別のQRを読む',
+      confirmButtonColor:'#1a73e8',
+    }).then(function(){ last=''; startCamera(); });
   }
-  else { document.getElementById('status-bar').textContent = '未対応QR'; }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ===== 手動入力 =====
+function processManual() {
+  var val = document.getElementById('manual-input').value.trim();
+  if (!val) return;
+  // PLAN-XXXXXXXXだけ入力された場合に対応
+  if (/^PLAN-[A-Z0-9]+$/i.test(val)) {
+    loadPlan(JSON.stringify({type:'PROCESS', planId:val.toUpperCase()}));
+  } else {
+    processQR(val);
+  }
 }
 
 // ===== API呼び出し =====
 function apiCall(params) {
   if (!GAS_URL) {
-    return Promise.reject(new Error('GAS URLが設定されていません。上部のURLバーに設定してください。'));
+    return Promise.reject(new Error('GAS URLが未設定です。上部の入力欄にGASのURLを入れて「保存」してください。'));
   }
-  var url = GAS_URL + '?' + Object.keys(params).map(function(k){
-    return k + '=' + encodeURIComponent(params[k]);
+  var qs = Object.keys(params).map(function(k){
+    return k+'='+encodeURIComponent(params[k]);
   }).join('&');
-  return fetch(url).then(function(r){ return r.json(); });
+  return fetch(GAS_URL+'?'+qs).then(function(r){return r.json();});
 }
 
 function loadPlan(qrJson) {
-  Swal.fire({title:'取得中...',allowOutsideClick:false,didOpen:function(){Swal.showLoading();}});
-  apiCall({action:'getPlanInfo', qrJson:qrJson})
-    .then(function(r) {
+  Swal.fire({title:'情報取得中...',allowOutsideClick:false,didOpen:function(){Swal.showLoading();}});
+  apiCall({action:'getPlanInfo',qrJson:qrJson})
+    .then(function(r){
       Swal.close();
-      if (!r.success) { Swal.fire({icon:'error',title:'エラー',text:r.message,background:'#2c2c2e',color:'#fff'}); return; }
+      if (!r.success){ Swal.fire({icon:'error',title:'エラー',text:r.message,background:'#2c2c2e',color:'#fff'}); return; }
       showPlan(r.plan, r.history);
     })
-    .catch(function(e) {
+    .catch(function(e){
       Swal.close();
       Swal.fire({icon:'error',title:'通信エラー',text:e.message,background:'#2c2c2e',color:'#fff'});
     });
 }
 
 function showPlan(p, hist) {
-  planId = p['計画ID']; process = p['工程名'];
+  planId=p['計画ID']; procName=p['工程名'];
   document.getElementById('plan-dl').innerHTML =
     '<dt>計画ID</dt><dd>'+p['計画ID']+'</dd>'+
     '<dt>社内品番</dt><dd>'+(p['社内品番']||'-')+'</dd>'+
     '<dt>品名</dt><dd>'+(p['品名']||'-')+'</dd>'+
-    '<dt>工程</dt><dd style="color:#1a73e8">'+(p['工程名']||'-')+'</dd>'+
-    '<dt>期間</dt><dd>'+(p['計画開始日']||'')+'～'+(p['計画終了日']||'-')+'</dd>'+
-    '<dt>状態</dt><dd>'+(p['状態']||'-')+'</dd>';
+    '<dt>工程</dt><dd style="color:#1a73e8;font-weight:900">'+(p['工程名']||'-')+'</dd>'+
+    '<dt>計画期間</dt><dd>'+(p['計画開始日']||'')+'～'+(p['計画終了日']||'-')+'</dd>'+
+    '<dt>現在状態</dt><dd>'+(p['状態']||'-')+'</dd>';
   show('plan-card'); show('form-card');
   if (hist && hist.length) {
     document.getElementById('hist-list').innerHTML = hist.slice(0,5).map(function(h){
-      return '<div class="hist"><span class="badge '+(h.status==='完了'?'done':'prog')+'">'+h.status+'</span><span>'+h.operator+'</span><span style="margin-left:auto;color:#888">'+h.date+'</span></div>';
+      return '<div class="hist"><span class="badge '+(h.status==='完了'?'done':'prog')+'">'+h.status+'</span>'+
+        '<span>'+h.operator+'</span><span style="margin-left:auto;color:#888">'+h.date+'</span></div>';
     }).join('');
     show('hist-card');
   }
   document.getElementById('form-card').scrollIntoView({behavior:'smooth'});
 }
 
-function selStatus(btn) {
+function selStatus(btn){
   document.querySelectorAll('.sbtn').forEach(function(b){b.classList.remove('sel');});
-  btn.classList.add('sel'); status = btn.dataset.v;
+  btn.classList.add('sel'); status=btn.dataset.v;
 }
 
-function send() {
-  var op = document.getElementById('f-op').value.trim();
-  var qty = document.getElementById('f-qty').value;
-  var notes = document.getElementById('f-notes').value;
-  if (!op)     { Swal.fire({icon:'warning',title:'作業者名を入力',background:'#2c2c2e',color:'#fff'}); return; }
-  if (!status) { Swal.fire({icon:'warning',title:'ステータスを選択',background:'#2c2c2e',color:'#fff'}); return; }
-  document.getElementById('send-btn').disabled = true;
+function send(){
+  var op=document.getElementById('f-op').value.trim();
+  var qty=document.getElementById('f-qty').value;
+  var notes=document.getElementById('f-notes').value;
+  if(!op){Swal.fire({icon:'warning',title:'作業者名を入力',background:'#2c2c2e',color:'#fff'});return;}
+  if(!status){Swal.fire({icon:'warning',title:'ステータスを選択',background:'#2c2c2e',color:'#fff'});return;}
+  document.getElementById('send-btn').disabled=true;
   Swal.fire({title:'送信中...',allowOutsideClick:false,didOpen:function(){Swal.showLoading();}});
-  apiCall({action:'submitProgress', data:JSON.stringify({planId:planId,processName:process,operator:op,actualQty:qty?Number(qty):0,status:status,notes:notes})})
-    .then(function(r) {
-      Swal.close(); document.getElementById('send-btn').disabled = false;
-      if (!r.success) { Swal.fire({icon:'error',title:'エラー',text:r.message,background:'#2c2c2e',color:'#fff'}); return; }
-      Swal.fire({icon:'success',title:'登録完了！',html:'<strong>'+process+'</strong> の実績を送信',background:'#2c2c2e',color:'#fff',timer:2000,timerProgressBar:true}).then(reset);
-    })
-    .catch(function(e) {
-      Swal.close(); document.getElementById('send-btn').disabled = false;
-      Swal.fire({icon:'error',title:'通信エラー',text:e.message,background:'#2c2c2e',color:'#fff'});
-    });
+  apiCall({action:'submitProgress',data:JSON.stringify({
+    planId:planId,processName:procName,operator:op,
+    actualQty:qty?Number(qty):0,status:status,notes:notes
+  })})
+  .then(function(r){
+    Swal.close(); document.getElementById('send-btn').disabled=false;
+    if(!r.success){Swal.fire({icon:'error',title:'エラー',text:r.message,background:'#2c2c2e',color:'#fff'});return;}
+    Swal.fire({icon:'success',title:'登録完了！',html:'<strong>'+procName+'</strong> の実績を送信しました',
+      background:'#2c2c2e',color:'#fff',timer:2000,timerProgressBar:true}).then(reset);
+  })
+  .catch(function(e){
+    Swal.close(); document.getElementById('send-btn').disabled=false;
+    Swal.fire({icon:'error',title:'通信エラー',text:e.message,background:'#2c2c2e',color:'#fff'});
+  });
 }
 
-function reset() {
-  planId=''; process=''; status=''; last='';
+function reset(){
+  planId=''; procName=''; status=''; last=''; scanCount=0; detectCount=0;
   hide('plan-card'); hide('form-card'); hide('hist-card');
   document.getElementById('plan-dl').innerHTML='';
   document.getElementById('hist-list').innerHTML='';
   ['f-op','f-qty','f-notes','manual-input'].forEach(function(id){document.getElementById(id).value='';});
   document.querySelectorAll('.sbtn').forEach(function(b){b.classList.remove('sel');});
-  document.getElementById('status-bar').textContent='スキャン待機中...';
+  document.getElementById('status-bar').textContent='スキャン待機中 📷';
+  debug('リセット - カメラ再起動');
   startCamera();
 }
 
 function show(id){document.getElementById(id).classList.remove('hidden');}
 function hide(id){document.getElementById(id).classList.add('hidden');}
 
-startCamera();
+// ===== 起動 =====
+loadJsQR(function(){ debug('jsQR読込完了 - カメラ起動開始'); startCamera(); });
 </script>
 </body>
 </html>
